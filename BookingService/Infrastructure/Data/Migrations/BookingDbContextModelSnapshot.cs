@@ -40,7 +40,8 @@ namespace BookingService.Infrastructure.Data.Migrations
                         .HasColumnName("booked_to");
 
                     b.Property<DateTimeOffset?>("CancellationRequestedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancellation_requested_at");
 
                     b.Property<Guid?>("CatalogRequestId")
                         .HasColumnType("uuid")

@@ -86,8 +86,7 @@ public class BookingService
         var booking = await _repository.FindByIdAsync(id)
             ?? throw new BusinessException($"Бронирование с указанным id: '{id}' не найдено.");
 
-        // var currentDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow().UtcDateTime);
-        var currentDate = _dateTimeProvider.UtcNow();
+        var currentDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow().UtcDateTime);
         booking.Cancel(currentDate);
 
         await _repository.SaveAsync(booking);
@@ -171,8 +170,7 @@ public class BookingService
         _logger.LogInformation("Найдено бронирование: id={Id}, статус={Status}. Отменяем...",
             booking.Id, booking.Status);
 
-        // var currentDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow().UtcDateTime);
-        var currentDate = _dateTimeProvider.UtcNow();
+        var currentDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow().UtcDateTime);
         booking.Cancel(currentDate);
         await _repository.SaveAsync(booking);
 
@@ -183,7 +181,7 @@ public class BookingService
     // TODO: Task 01 — откат отмены бронирования (компенсирующая транзакция)
     public async Task HandleCancellationError(Guid requestId)
     {
-        _logger.LogInformation($"Получена команда отката для RequestId {requestId}");
+        _logger.LogInformation("Получена команда отката для RequestId {RequestId}", requestId);
         
         var booking = await _repository.FindByCatalogRequestIdAsync(requestId);
 
@@ -197,7 +195,7 @@ public class BookingService
         
         await _repository.SaveAsync(booking);
         
-        _logger.LogInformation($"Откат отмены для requestId {requestId} совершён");
+        _logger.LogInformation("Откат отмены для requestId {RequestId} совершён", requestId);
     }
 
     /// <summary>Устаревший метод-заглушка — используйте HandleCancellationError</summary>
