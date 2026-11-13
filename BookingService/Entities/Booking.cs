@@ -81,7 +81,7 @@ public class Booking
     /// Отменить бронирование с учётом бизнес-правил.
     /// TODO: Task 01 — добавить обработку статуса Confirmed (→ CancellationPending)
     /// </summary>
-    public void Cancel(DateOnly currentDate)
+    public void Cancel(DateTimeOffset currentDate)
     {
         switch (Status)
         {
@@ -90,17 +90,33 @@ public class Booking
                 // отменяем немедленно, откат не нужен
                 Status = BookingStatus.Cancelled;
                 break;
-
+            case BookingStatus.Confirmed:
+                Status = BookingStatus.CancellationPending;
+                CancellationRequestedAt = currentDate;
+                break;
             case BookingStatus.None:
             case BookingStatus.Cancelled:
+            case BookingStatus.CancellationPending:
             default:
                 throw new BusinessException("Некорректный статус для отмены");
         }
     }
 
     // TODO: Task 01 — завершить отмену: CancellationPending → Cancelled
-    public void CompleteCancellation() => throw new NotImplementedException();
+    public void CompleteCancellation()
+    {
+        if (Status != BookingStatus.CancellationPending)
+            throw new BusinessException($"Статус заявки некорректен, заявка должна быть в статусе {BookingStatus.CancellationPending}");
+        
+        Status = BookingStatus.Cancelled;
+    }
 
     // TODO: Task 01 — откатить отмену: CancellationPending → Confirmed (при ошибке DLQ)
-    public void RollbackCancellation() => throw new NotImplementedException();
+    public void RollbackCancellation()
+    {
+        if (Status != BookingStatus.CancellationPending)
+            throw new BusinessException($"Статус заявки некорректен, заявка должна быть в статусе {BookingStatus.CancellationPending}");
+        
+        Status = BookingStatus.Confirmed;
+    }
 }
