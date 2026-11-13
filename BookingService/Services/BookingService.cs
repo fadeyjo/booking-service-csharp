@@ -179,7 +179,24 @@ public class BookingService
     }
 
     // TODO: Task 01 — откат отмены бронирования (компенсирующая транзакция)
-    public Task HandleCancellationError(Guid requestId) => throw new NotImplementedException();
+    public async Task HandleCancellationError(Guid requestId)
+    {
+        _logger.LogInformation("Получена команда отката для RequestId {RequestId}", requestId);
+        
+        var booking = await _repository.FindByCatalogRequestIdAsync(requestId);
+
+        if (booking is null)
+        {
+            _logger.LogWarning("Бронирование не найдено по requestId: {RequestId}. Событие проигнорировано.", requestId);
+            return;
+        }
+        
+        booking.RollbackCancellation();
+        
+        await _repository.SaveAsync(booking);
+        
+        _logger.LogInformation("Откат отмены для requestId {RequestId} совершён", requestId);
+    }
 
     /// <summary>Устаревший метод-заглушка — используйте HandleCancellationError</summary>
     public Task HandleError(Guid requestId) => HandleCancellationError(requestId);
