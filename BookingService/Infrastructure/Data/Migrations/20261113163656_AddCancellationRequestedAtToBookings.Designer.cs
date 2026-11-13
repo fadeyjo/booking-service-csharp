@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookingService.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(BookingDbContext))]
-    [Migration("20261113162538_AddCancellationRequestedAtToBookings")]
+    [Migration("20261113163656_AddCancellationRequestedAtToBookings")]
     partial class AddCancellationRequestedAtToBookings
     {
         /// <inheritdoc />
