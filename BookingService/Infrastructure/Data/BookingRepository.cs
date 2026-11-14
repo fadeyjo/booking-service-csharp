@@ -67,8 +67,37 @@ public class BookingRepository
     }
 
     // TODO: Task 02 — реализовать агрегирующий SQL-запрос статистики
-    public Task<StatisticsResponse> GetStatisticsAsync()
-        => throw new NotImplementedException();
+    public async Task<StatisticsResponse> GetStatisticsAsync()
+    {
+        var totalCount = await _context.Bookings.CountAsync();
+
+        var byStatus = await _context.Bookings
+            .GroupBy(b => b.Status)
+            .Select(g => new StatusCount()
+            {
+                Status = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync();
+        
+        var topResources = await  _context.Bookings
+            .GroupBy(b => b.ResourceId)
+            .OrderByDescending(g => g.Count())
+            .Take(5)
+            .Select(g => new ResourceCount()
+            {
+                ResourceId = g.Key,
+                BookingCount =  g.Count()
+            })
+            .ToListAsync();
+
+        return new StatisticsResponse()
+        {
+            TotalCount = totalCount,
+            ByStatus = byStatus,
+            TopResources = topResources
+        };
+    }
 
     // TODO: Task 03 — найти бронирования, застрявшие в CancellationPending
     public Task<List<Booking>> FindStuckCancellationsAsync(DateTimeOffset cancellationRequestedBefore)

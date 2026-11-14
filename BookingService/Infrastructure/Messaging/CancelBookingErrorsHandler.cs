@@ -21,7 +21,8 @@ public class CancelBookingErrorsHandler : IHandleMessages<CancelBookingJobByRequ
     // TODO: Task 01 — реализовать компенсирующую транзакцию (откат отмены бронирования)
     public async Task Handle(CancelBookingJobByRequestIdRequest message)
     {
-        _logger.LogInformation($"Получено сообщение из DLQ EventId {message.EventId} RequestId {message.RequestId}");
+        _logger.LogInformation("Получено сообщение из DLQ EventId {EventId} RequestId {RequestId}",
+            message.EventId, message.RequestId);
         await _bookingService.HandleCancellationError(message.RequestId);
     }
 }
