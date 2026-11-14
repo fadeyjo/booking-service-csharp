@@ -77,7 +77,7 @@ public class BookingEntityTests
         var booking = CreateConfirmedBooking(from, from.AddDays(3));
 
         booking.Cancel(DateOnly.FromDateTime(DateTime.UtcNow));
-
+        
         booking.CancellationRequestedAt.Should().NotBeNull(
             because: "При переходе в CancellationPending должна фиксироваться метка времени");
         booking.CancellationRequestedAt!.Value.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
@@ -105,7 +105,7 @@ public class BookingEntityTests
         var from = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));
         var booking = CreateConfirmedBooking(from, from.AddDays(3));
         booking.Cancel(DateOnly.FromDateTime(DateTime.UtcNow));
-
+        
         booking.CompleteCancellation();
 
         booking.Status.Should().Be(BookingStatus.Cancelled,
