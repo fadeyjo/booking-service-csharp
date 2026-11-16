@@ -1,9 +1,11 @@
+using BookingService.BackgroundJobs;
 using BookingService.Configuration;
 using BookingService.Exceptions;
 using BookingService.Infrastructure.Data;
 using BookingService.Infrastructure.Messaging;
 using BookingService.Infrastructure.Messaging.Contracts;
 using BookingService.Mappers;
+using BookingService.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +68,9 @@ builder.Services.AddRebus(
 
 builder.Services.AddRebusHandler<BookingEventsHandler>();
 builder.Services.AddRebusHandler<CancelBookingErrorsHandler>();
+
+// ---- Фоновые задачи ----
+builder.Services.AddHostedService<StuckCancellationsJob>();
 
 // ---- App ----
 var app = builder.Build();

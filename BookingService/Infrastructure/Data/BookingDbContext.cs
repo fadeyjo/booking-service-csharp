@@ -52,9 +52,20 @@ public class BookingDbContext : DbContext
             entity.Property(b => b.CatalogRequestId)
                 .HasColumnName("catalog_request_id")
                 .HasColumnType("uuid");
+            
+            entity.Property(b => b.CancellationRequestedAt)
+                .HasColumnName("cancellation_requested_at")
+                .HasColumnType("timestamp with time zone");
 
-            entity.HasIndex(b => b.Status)
-                .HasDatabaseName("idx_bookings_status");
+            entity.Property(b => b.Version)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .IsRowVersion();
+
+            entity.HasIndex(b => b.Status, "idx_bookings_status");
+
+            entity.HasIndex(b => b.Status, "idx_bookings_cancellation_pending")
+                .HasFilter("status = 4");
 
             entity.HasIndex(b => b.UserId)
                 .HasDatabaseName("idx_bookings_user_id");
