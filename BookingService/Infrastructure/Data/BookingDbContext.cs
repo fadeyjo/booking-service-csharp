@@ -12,12 +12,12 @@ public class BookingDbContext : DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
-        AddStatusHistoryEntries();
+        UpdateStatusHistory();
         
         return await base.SaveChangesAsync(cancellationToken);
     }
 
-    private void AddStatusHistoryEntries()
+    private void UpdateStatusHistory()
     {
         var bookingEntries = ChangeTracker.Entries<Booking>()
             .Where(e => e.State is EntityState.Added or EntityState.Modified)
