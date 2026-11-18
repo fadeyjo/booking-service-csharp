@@ -33,7 +33,7 @@ public class BookingDbContext : DbContext
             {
                 case EntityState.Added:
                     StatusHistory.Add(BookingStatusHistory.Create(
-                        entry.Entity.Id, null, newStatus));
+                        entry.Entity, null, newStatus));
                 
                     break;
                 case EntityState.Modified when statusProperty.IsModified:

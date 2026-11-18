@@ -114,6 +114,7 @@ public class BookingRepository
     {
         return await _context.StatusHistory
             .Where(h => h.BookingId == bookingId)
+            .OrderBy(b => b.ChangedAt)
             .ToListAsync();
     }
 }

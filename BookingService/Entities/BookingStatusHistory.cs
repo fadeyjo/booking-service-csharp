@@ -19,6 +19,15 @@ public class BookingStatusHistory
             StatusTo = statusTo,
             ChangedAt = DateTimeOffset.UtcNow
         };
+    
+    public static BookingStatusHistory Create(Booking booking, BookingStatus? statusFrom, BookingStatus statusTo)
+        => new()
+        {
+            Booking = booking,
+            StatusFrom = statusFrom,
+            StatusTo = statusTo,
+            ChangedAt = DateTimeOffset.UtcNow
+        };
 
     public Booking Booking { get; set; }
 }
