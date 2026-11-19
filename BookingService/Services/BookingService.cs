@@ -128,6 +128,22 @@ public class BookingService
     public async Task<BookingStatus?> GetStatusById(long id)
         => await _repository.FindStatusByIdAsync(id);
 
+    public async Task<bool> IsEventAlreadyProcessedAsync(Guid eventId, Guid requestId, string eventName)
+    {
+        if (!await _repository.EventAlreadyProcessed(eventId)) 
+        {
+            return false;
+        }
+
+        _logger.LogWarning(
+            "Получено уже обработанное событие {EventName}: requestId={RequestId} eventId={EventId}", 
+            eventName, 
+            requestId, 
+            eventId);
+
+        return true;
+    }
+
     // === EVENT HANDLERS (Обработка асинхронных событий от Catalog Service) ===
 
     /// <summary>
@@ -136,12 +152,8 @@ public class BookingService
     /// </summary>
     public async Task HandleBookingJobConfirmed(Guid requestId, Guid eventId)
     {
-        if (await _repository.EventAlreadyProcessed(eventId))
-        {
-            _logger.LogWarning("Получено уже обработанное событие BookingJobConfirmed: requestId={RequestId} eventId={EventId}", requestId, eventId);
-
-            return;
-        }
+        if (await IsEventAlreadyProcessedAsync(eventId, requestId,
+                "BookingJobConfirmed")) return;
         
         _logger.LogInformation("Получено событие BookingJobConfirmed: requestId={RequestId}", requestId);
 
@@ -162,6 +174,8 @@ public class BookingService
             return;
         }
 
+        await _repository.AddEventAsync(eventId, DateTimeOffset.UtcNow);
+        
         var tryNumber = 1;
         var triesCount = _configuration.GetValue("TriesCountToConfirmBooking", 3);
 
@@ -174,8 +188,7 @@ public class BookingService
                     tryNumber, booking.Id, booking.Status);
 
                 booking.Confirm();
-
-                await _repository.AddEventAsync(eventId, DateTimeOffset.UtcNow);
+                
                 await _repository.SaveAsync(booking);
 
                 _logger.LogInformation("Бронирование успешно подтверждено: id={Id}, новый статус={Status}",
@@ -222,12 +235,8 @@ public class BookingService
     /// </summary>
     public async Task HandleBookingJobDenied(Guid requestId, Guid eventId)
     {
-        if (await _repository.EventAlreadyProcessed(eventId))
-        {
-            _logger.LogWarning("Получено уже обработанное событие HandleBookingJobDenied: requestId={RequestId} eventId={EventId}", requestId, eventId);
-
-            return;
-        }
+        if (await IsEventAlreadyProcessedAsync(eventId, requestId,
+                "HandleBookingJobDenied")) return;
         
         _logger.LogInformation("Получено событие BookingJobDenied: requestId={RequestId}", requestId);
 
@@ -266,12 +275,8 @@ public class BookingService
     // TODO: Task 01 — откат отмены бронирования (компенсирующая транзакция)
     public async Task HandleCancellationError(Guid requestId, Guid eventId)
     {
-        if (await _repository.EventAlreadyProcessed(eventId))
-        {
-            _logger.LogWarning("Получено уже обработанная команда отката: requestId={RequestId} eventId={EventId}", requestId, eventId);
-
-            return;
-        }
+        if (await IsEventAlreadyProcessedAsync(eventId, requestId,
+                "CancellationError (команда отката)")) return;
         
         _logger.LogInformation("Получена команда отката для RequestId {RequestId}", requestId);
         
