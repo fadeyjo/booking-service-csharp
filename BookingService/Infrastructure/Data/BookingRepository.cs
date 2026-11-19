@@ -67,10 +67,63 @@ public class BookingRepository
     }
 
     // TODO: Task 02 — реализовать агрегирующий SQL-запрос статистики
-    public Task<StatisticsResponse> GetStatisticsAsync()
-        => throw new NotImplementedException();
+    public async Task<StatisticsResponse> GetStatisticsAsync()
+    {
+        var totalCount = await _context.Bookings.CountAsync();
+
+        var byStatus = await _context.Bookings
+            .GroupBy(b => b.Status)
+            .Select(g => new StatusCount()
+            {
+                Status = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync();
+        
+        var topResources = await _context.Bookings
+            .GroupBy(b => b.ResourceId)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key)
+            .Take(5)
+            .Select(g => new ResourceCount()
+            {
+                ResourceId = g.Key,
+                BookingCount =  g.Count()
+            })
+            .ToListAsync();
+
+        return new StatisticsResponse()
+        {
+            TotalCount = totalCount,
+            ByStatus = byStatus,
+            TopResources = topResources
+        };
+    }
 
     // TODO: Task 03 — найти бронирования, застрявшие в CancellationPending
-    public Task<List<Booking>> FindStuckCancellationsAsync(DateTimeOffset cancellationRequestedBefore)
-        => throw new NotImplementedException();
+    public async Task<List<Booking>> FindStuckCancellationsAsync(DateTimeOffset cancellationRequestedBefore)
+        => await _context.Bookings
+            .Where(b =>
+                b.Status == BookingStatus.CancellationPending &&
+                b.CancellationRequestedAt < cancellationRequestedBefore)
+            .ToListAsync();
+    
+    public async Task ReloadAsync(Booking booking) => await _context.Entry(booking).ReloadAsync();
+
+    public async Task<List<BookingStatusHistory>> GetBookingHistoryAsync(long bookingId)
+    {
+        return await _context.StatusHistory
+            .Where(h => h.BookingId == bookingId)
+            .OrderBy(b => b.ChangedAt)
+            .ToListAsync();
+    }
+    
+    public async Task<bool> EventAlreadyProcessed(Guid eventId) => await _context.ProcessedEvents.AnyAsync(e => e.EventId == eventId);
+
+    public async Task AddEventAsync(Guid eventId, DateTimeOffset processedAt) =>
+        await _context.ProcessedEvents.AddAsync(new ProcessedEvent()
+        {
+            EventId = eventId,
+            ProcessedAt = processedAt
+        });
 }

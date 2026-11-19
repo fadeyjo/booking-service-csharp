@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using BookingService.Exceptions;
 
 namespace BookingService.Entities;
@@ -15,6 +16,8 @@ public class Booking
     public DateOnly BookedTo { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public Guid? CatalogRequestId { get; private set; }
+    
+    public List<BookingStatusHistory> StatusHistory { get; set; } = [];
 
     // TODO: Task 01 — время, когда была запрошена отмена подтверждённого бронирования
     public DateTimeOffset? CancellationRequestedAt { get; private set; }
@@ -90,17 +93,37 @@ public class Booking
                 // отменяем немедленно, откат не нужен
                 Status = BookingStatus.Cancelled;
                 break;
-
+            case BookingStatus.Confirmed:
+                if (currentDate >= BookedFrom)
+                    throw new BusinessException("Бронь уже начата, отменить её нельзя");
+                Status = BookingStatus.CancellationPending;
+                CancellationRequestedAt = DateTimeOffset.UtcNow;
+                break;
             case BookingStatus.None:
             case BookingStatus.Cancelled:
+            case BookingStatus.CancellationPending:
             default:
                 throw new BusinessException("Некорректный статус для отмены");
         }
     }
 
     // TODO: Task 01 — завершить отмену: CancellationPending → Cancelled
-    public void CompleteCancellation() => throw new NotImplementedException();
+    public void CompleteCancellation()
+    {
+        if (Status != BookingStatus.CancellationPending)
+            throw new BusinessException($"Статус заявки некорректен, заявка должна быть в статусе {BookingStatus.CancellationPending}");
+        
+        Status = BookingStatus.Cancelled;
+        CancellationRequestedAt = null;
+    }
 
     // TODO: Task 01 — откатить отмену: CancellationPending → Confirmed (при ошибке DLQ)
-    public void RollbackCancellation() => throw new NotImplementedException();
+    public void RollbackCancellation()
+    {
+        if (Status != BookingStatus.CancellationPending)
+            throw new BusinessException($"Статус заявки некорректен, заявка должна быть в статусе {BookingStatus.CancellationPending}");
+        
+        Status = BookingStatus.Confirmed;
+        CancellationRequestedAt = null;
+    }
 }
