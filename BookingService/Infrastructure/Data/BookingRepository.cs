@@ -117,4 +117,13 @@ public class BookingRepository
             .OrderBy(b => b.ChangedAt)
             .ToListAsync();
     }
+    
+    public async Task<bool> EventAlreadyProcessed(Guid eventId) => await _context.ProcessedEvents.AnyAsync(e => e.EventId == eventId);
+
+    public async Task AddEventAsync(Guid eventId, DateTimeOffset processedAt) =>
+        await _context.ProcessedEvents.AddAsync(new ProcessedEvent()
+        {
+            EventId = eventId,
+            ProcessedAt = processedAt
+        });
 }

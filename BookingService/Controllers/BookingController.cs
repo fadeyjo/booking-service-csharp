@@ -15,12 +15,14 @@ namespace BookingService.Controllers;
 public class BookingController : ControllerBase
 {
     private readonly Services.BookingService _bookingService;
-    private readonly BookingMapper _mapper;
+    private readonly BookingMapper _bookingMapper;
+    private readonly BookingStatusHistoryMapper _bookingStatusHistoryMapper;
 
-    public BookingController(Services.BookingService bookingService, BookingMapper mapper)
+    public BookingController(Services.BookingService bookingService, BookingMapper mapper, BookingStatusHistoryMapper bookingStatusHistoryMapper)
     {
         _bookingService = bookingService;
-        _mapper = mapper;
+        _bookingMapper = mapper;
+        _bookingStatusHistoryMapper = bookingStatusHistoryMapper;
     }
 
     /// <summary>Создать новое бронирование</summary>
@@ -35,7 +37,7 @@ public class BookingController : ControllerBase
     public async Task<BookingResponse> GetById([FromRoute] long id)
     {
         var booking = await _bookingService.GetById(id);
-        return _mapper.ToResponse(booking);
+        return _bookingMapper.ToResponse(booking);
     }
 
     /// <summary>Получить список бронирований с фильтрацией и пагинацией</summary>
@@ -51,7 +53,7 @@ public class BookingController : ControllerBase
             request.PageSize
         );
 
-        return _mapper.ToResponseList(bookings);
+        return _bookingMapper.ToResponseList(bookings);
     }
 
     /// <summary>Получить статус бронирования по ID</summary>
@@ -70,9 +72,14 @@ public class BookingController : ControllerBase
     [HttpGet("statistics")]
     [ProducesResponseType<StatisticsResponse>(StatusCodes.Status200OK)]
     public async Task<StatisticsResponse> GetStatistics() => await _bookingService.GetStatistics();
-    
+
     /// <summary>История изменения бронирования</summary>
     [HttpGet("{id:long}/history")]
-    [ProducesResponseType<List<BookingStatusHistory>>(StatusCodes.Status200OK)]
-    public async Task<List<BookingStatusHistory>> GetBookingHistory(long id) => await _bookingService.GetBookingHistory(id);
+    [ProducesResponseType<List<BookingStatusHistoryResponse>>(StatusCodes.Status200OK)]
+    public async Task<List<BookingStatusHistoryResponse>> GetBookingHistory(long id)
+    {
+        var history = await _bookingService.GetBookingHistory(id);
+        
+        return _bookingStatusHistoryMapper.ToResponseList(history);
+    }
 }
